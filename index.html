@@ -151,11 +151,11 @@
 						<div class="search-box">
 							<form action="templateshub.net">
 								<div class="form-group search-location">
-									<input type="text" class="form-control" placeholder="Search Location">
+									<input type="text" class="form-control" id="locInput" placeholder="Search Location" onkeyup="locSearch()">
 									<span class="form-text">Based on your Location</span>
 								</div>
 								<div class="form-group search-info">
-									<input type="text" class="form-control" placeholder="Search Doctors, Clinics, Hospitals, Diseases Etc">
+									<input type="text" class="form-control" id="docInput" placeholder="Search Doctors, Clinics, Hospitals, Diseases Etc" onkeyup="docSearch()">
 									<span class="form-text">Ex : Dental or Sugar Check up etc</span>
 								</div>
 								<button type="submit" class="btn btn-primary search-btn"><i class="fas fa-search"></i> <span>Search</span></button>
@@ -255,7 +255,7 @@
 							</div>
 						</div>
 						<div class="col-lg-8">
-							<div class="doctor-slider slider">
+							<div class="doctor-slider slider" id="doctors">
 
 								<!-- Doctor Widget -->
 								<div class="profile-widget">
@@ -863,6 +863,7 @@
 
 		<!-- Custom JS -->
 		<script src="js/script.js"></script>
+    <script src="js/search.js"></script>
 
 	</body>
 

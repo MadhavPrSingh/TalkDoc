@@ -1,27 +1,44 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
+const hbs = require("hbs");
 
+require("./conn");
 
+const PatientReg = require("./PatientReg");
+const DoctorReg = require("./DoctorReg");
+const { json } = require("express");
+
+const templatePath = path.join(__dirname + '/templates/views/');
+const partialPath =  path.join(__dirname + '/templates/partials/');
 
 const app = express();
+
+app.use(express.json());
+app.set("view engine","hbs");
+app.set("views",templatePath);
+app.use(express.urlencoded({extended:false}))
+hbs.registerPartials(partialPath);
 
 
 app.use(express.static(__dirname + '/assets'));
 app.use(bodyParser.urlencoded({extended : true}));
 
-app.use('/admin/public', express.static(__dirname + '/admin/public'));
-app.use(bodyParser.urlencoded({extended : true}));
 
 
 
 
-app.get('/', function(request, response){
-  response.sendFile(path.join(__dirname,'index.html'));
+
+app.get('/', function(request, res){
+  res.render("login");
 });
 
-app.get('/index-2.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'index-2.html'));
+app.get('/index.html', function(request, response){
+  response.render("index");
+});
+
+app.get('/index-2.html', function(req, res){
+  res.render("index-2");
 });
 
 app.get('/doctor-dashboard.html', function(request, response){
@@ -46,6 +63,9 @@ app.get('/chat-doctor.html', function(request, response){
 app.get('/invoices.html', function(request, response){
   response.sendFile(path.join(__dirname, 'invoices.html'));
 });
+app.get('/add-prescription.html', function(request, response){
+  response.sendFile(path.join(__dirname, 'add-prescription.html'));
+});
 
 app.get('/doctor-profile-settings.html', function(request, response){
   response.sendFile(path.join(__dirname, 'doctor-profile-settings.html'));
@@ -55,9 +75,52 @@ app.get('/reviews.html', function(request, response){
   response.sendFile(path.join(__dirname, 'reviews.html'));
 });
 
-app.get('/doctor-register.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'doctor-register.html'));
+app.get('/doctor-register.html', function(req, res){
+  res.render("doctor-register")
 });
+app.post("/doctor-register", async (req, res) => {
+    try{
+            const registerDoctors = new DoctorReg({
+                name : req.body.name,
+                phone : req.body.phone,
+                email : req.body.email,
+                password : req.body.password
+              });
+
+              const doctor = await registerDoctors.save();
+              res.status(201).render("login-doc");
+
+    }catch(error) {
+        res.status(400).send(error);
+    }
+
+})
+
+
+app.get('/login-doc.html', function(req, res){
+    res.render("login-doc");
+});
+app.post("/login-doc", async(req, res) => {
+    try{
+      const email = req.body.email;
+      const password = req.body.password;
+
+      const useremail = await DoctorReg.findOne({email:email});
+
+      if(useremail.email !== email){
+        res.status(400).sendFile(path.join(__dirname, 'error-500.html'));
+      }
+
+      if(useremail.password === password){
+        res.status(201).render("index-2");
+      }else{
+        res.status(400).sendFile(path.join(__dirname, 'error-500.html'))
+      }
+
+    }catch (error){
+        res.status(400).send(error);
+    }
+})
 
 app.get('/search.html', function(request, response){
   response.sendFile(path.join(__dirname, 'search.html'));
@@ -99,13 +162,8 @@ app.get('/change-password.html', function(request, response){
   response.sendFile(path.join(__dirname, 'change-password.html'));
 });
 
-app.get('/voice-call.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'voice-call.html'));
-});
 
-app.get('/video-call.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'video-call.html'));
-});
+
 
 app.get('/calendar.html', function(request, response){
   response.sendFile(path.join(__dirname, 'calendar.html'));
@@ -123,13 +181,54 @@ app.get('/blank-page.html', function(request, response){
   response.sendFile(path.join(__dirname, 'blank-page.html'));
 });
 
-app.get('/login.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'login.html'));
+app.get('/login.html', function(req, res){
+    res.render("login");
+});
+app.post('/login', async(req, res) => {
+    try{
+      const email = req.body.email;
+      const password = req.body.password;
+
+      const useremail = await PatientReg.findOne({email:email});
+      if(useremail.email !== email){
+        res.status(400).sendFile(path.join(__dirname, 'error-500.html'));
+      }
+
+      if(useremail.password === password){
+        res.status(201).render("index");
+      }else{
+        res.status(400).sendFile(path.join(__dirname, 'error-500.html'));
+      }
+
+    }catch (error){
+        res.status(400).send(error);
+    }
+})
+
+
+
+app.get('/register.html', function(req, res){
+  res.render("register");
 });
 
-app.get('/register.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'register.html'));
-});
+app.post("/register", async (req, res) => {
+    try{
+            const registerPatients = new PatientReg({
+                name : req.body.name,
+                phone : req.body.phone,
+                email : req.body.email,
+                password : req.body.password
+              });
+
+              const register = await registerPatients.save();
+              res.status(201).render("login");
+
+    }catch(error) {
+        res.status(400).send(error);
+    }
+
+})
+
 
 app.get('/forgot-password.html', function(request, response){
   response.sendFile(path.join(__dirname, 'forgot-password.html'));
@@ -142,108 +241,6 @@ app.get('/social-media.html', function(request, response){
 
 
 
-
-
-app.get('/admin/index.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/index.html'));
-});
-
-app.get('/admin/specialities.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/specialities.html'));
-});
-
-app.get('/admin/appointment-list.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/appointment-list.html'));
-});
-
-app.get('/admin/doctor-list.html', function(request, response){
-  response.sendFile(path.join(__dirname, '/admin/doctor-list.html'));
-});
-
-app.get('/admin/patient-list.html', function(request, response){
-  response.sendFile(path.join(__dirname, '/admin/patient-list.html'));
-});
-
-app.get('/admin/reviews.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/reviews.html'));
-});
-
-app.get('/admin/transactions-list.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/transactions-list.html'));
-});
-
-app.get('/admin/settings.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/settings.html'));
-});
-
-app.get('/admin/invoice-report.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/invoice-report.html'));
-});
-
-app.get('/admin/profile.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/profile.html'));
-});
-
-app.get('/admin/login.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/login.html'));
-});
-
-app.get('/admin/register.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/register.html'));
-});
-
-app.get('/admin/forgot-password.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/forgot-password.html'));
-});
-
-app.get('/admin/lock-screen.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/lock-screen.html'));
-});
-
-app.get('/admin/error-404.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/error-404.html'));
-});
-
-app.get('/admin/error-500.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/error-500.html'));
-});
-
-app.get('/admin/blank-page.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/blank-page.html'));
-});
-
-app.get('/admin/components.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/components.html'));
-});
-
-
-app.get('/admin/form-basic-inputs.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/form-basic-inputs.html'));
-});
-
-app.get('/admin/form-horizontal.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/form-horizontal.html'));
-});
-
-app.get('/admin/form-vertical.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/form-vertical.html'));
-});
-
-app.get('/admin/form-mask.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/form-mask.html'));
-});
-
-app.get('/admin/form-validation.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/form-validation.html'));
-});
-
-app.get('/admin/tables-basic.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/tables-basic.html'));
-});
-
-app.get('/admin/data-tables.html', function(request, response){
-  response.sendFile(path.join(__dirname, 'admin/data-tables.html'));
-});
 
 
 
